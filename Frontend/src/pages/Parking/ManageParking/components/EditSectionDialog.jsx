@@ -37,7 +37,7 @@ export default function EditSectionDialog({
     setLoading(true);
     setGeneralError("");
     try {
-      await api.put(`/sections/${section.id}`, {
+      await api.put(`/sections/${section.id}/`, {
         name,
         section_code: sectionCode,
       });

@@ -9,7 +9,7 @@ export function ParkingProvider({ children }) {
 
   const fetchAreas = async () => {
     try {
-      const res = await api.get("/parking-areas/list/minimal");
+      const res = await api.get("/parking-areas/minimal/");
       setAreas(res.data.data);
     } catch (err) {
       console.error("Failed to load areas");

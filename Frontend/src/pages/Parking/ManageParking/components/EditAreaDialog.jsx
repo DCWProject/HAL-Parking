@@ -49,7 +49,7 @@ export default function EditAreaDialog({
     setSubmitting(true);
     setError(null);
     try {
-      await api.put(`/parking-areas/${parkingArea.id}`, {
+      await api.put(`/parking-areas/${parkingArea.id}/`, {
         name,
         area_code: areaCode,
         description,
@@ -85,7 +85,7 @@ export default function EditAreaDialog({
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await api.delete(`/parking-areas/${parkingArea.id}`);
+      await api.delete(`/parking-areas/${parkingArea.id}/`);
       await refreshAreas();
       setShowDeleteConfirm(false);
       onClose();

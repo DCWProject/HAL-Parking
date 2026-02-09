@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const res = await api.get("/auth/me");
+      const res = await api.get("/auth/me/");
       setUser(res.data.data);
       setIsAuthenticated(true);
     } catch (err) {
@@ -35,10 +35,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const formData = new FormData();
-      formData.append("username", email);
+      formData.append("email", email);
       formData.append("password", password);
 
-      await api.post("/auth/login", formData, {
+      await api.post("/auth/login/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post("/auth/logout");
+      await api.post("/auth/logout/");
     } catch (e) {
       console.error("Logout failed", e);
     }
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
           logout();
         }
         return Promise.reject(error);
-      }
+      },
     );
     return () => api.interceptors.response.eject(interceptor);
   }, []);

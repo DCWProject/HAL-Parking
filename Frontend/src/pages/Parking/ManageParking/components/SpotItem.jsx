@@ -12,7 +12,7 @@ export default function SpotItem({ spot, onRefresh }) {
     if (!window.confirm(`Delete spot ${spot.spot_code}?`)) return;
     setDeleting(true);
     try {
-      await api.delete(`/spots/${spot.id}`);
+      await api.delete(`/spots/${spot.id}/`);
       onRefresh();
     } catch (error) {
       console.error(error);
@@ -28,6 +28,9 @@ export default function SpotItem({ spot, onRefresh }) {
           {spot.status === "OCCUPIED" && (
             <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
           )}
+        </div>
+        <div className="text-xs text-muted-foreground border border-border rounded-md px-2 py-1">
+          {spot.min_dist} - {spot.max_dist}
         </div>
         <div className="opacity-0 group-hover:opacity-100 flex gap-1">
           <Button

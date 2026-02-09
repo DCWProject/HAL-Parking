@@ -13,7 +13,7 @@ export default function ManageParking() {
   const fetchData = async () => {
     try {
       // setLoading(true); // Don't reset loading on every refresh to avoid flicker
-      const res = await api.get(`/parking-areas/${id}`);
+      const res = await api.get(`/parking-areas/${id}/`);
       setParkingArea(res.data.data);
     } catch (error) {
       console.error(error);

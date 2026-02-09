@@ -31,7 +31,14 @@ export default function Dashboard() {
 
   // WebSocket Connection
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8000/ws/parking"); // Ideally env var
+    const base = import.meta.env.VITE_API_BASE;
+    let wsUrl;
+    if (base.startsWith("https")) {
+      wsUrl = base.replace("https", "wss");
+    } else {
+      wsUrl = base.replace("http", "ws");
+    }
+    const ws = new WebSocket(wsUrl + "/ws/parking/");
 
     ws.onopen = () => {
       console.log("Connected to WebSocket");
@@ -56,7 +63,7 @@ export default function Dashboard() {
         const newSpots = [...prevSpots];
         msg.data.forEach((update) => {
           const index = newSpots.findIndex(
-            (s) => s.spot_code === update.spot_code
+            (s) => s.spot_code === update.spot_code,
           );
           if (index !== -1) {
             newSpots[index] = {
@@ -95,7 +102,7 @@ export default function Dashboard() {
   const fetchDetails = async (areaId) => {
     try {
       // Fetch sections for the area
-      const sectionRes = await api.get(`/sections/by-area/${areaId}`);
+      const sectionRes = await api.get(`/sections/by-area/${areaId}/`);
       setBays(sectionRes.data.data);
 
       // Fetch spots for all sections
@@ -103,7 +110,7 @@ export default function Dashboard() {
       // Actually let's just fetch spots for each section and combine
       let allSpots = [];
       for (const section of sectionRes.data.data) {
-        const spotRes = await api.get(`/spots/by-section/${section.id}`);
+        const spotRes = await api.get(`/spots/by-section/${section.id}/`);
         allSpots = [...allSpots, ...spotRes.data.data];
       }
       setSpots(allSpots);

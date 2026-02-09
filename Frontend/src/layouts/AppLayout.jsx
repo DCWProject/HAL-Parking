@@ -1,6 +1,4 @@
-import { useState, useEffect } from "react";
-import api from "@/services/api";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { Link, Outlet, useLocation } from "react-router-dom";
@@ -31,7 +29,7 @@ export default function AppLayout() {
 
   const navItems = [
     { name: "Overview", path: "/dashboard", icon: LayoutDashboard },
-    { name: "Parking", path: "/parking", icon: Car },
+    { name: "Parking Areas", path: "/parking", icon: Car },
   ];
 
   const SidebarContent = ({ collapsed = false }) => (
@@ -46,23 +44,22 @@ export default function AppLayout() {
         {!collapsed ? (
           <div className="flex items-center gap-2 overflow-hidden">
             <img
-              src="/images/logo.png"
+              src={theme === "dark" ? "/images/logo_dark.png" : "/images/logo.png"}
               alt="InteliPark Logo"
               className="h-16 w-auto object-contain"
             />
             <div>
-              <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-purple-500 drop-shadow-sm truncate">
-                InteliPark
-              </h1>
-              <p className="text-[9px] text-muted-foreground tracking-widest uppercase font-semibold">
-                Admin Console
-              </p>
+              <img 
+                src={theme === "dark" ? "/images/logo_text_dark.png" : "/images/logo_text.png"}
+                alt="InteliPark Logo"
+                className="h-16 w-auto object-contain"
+              />
             </div>
           </div>
         ) : (
           <div className="w-10 h-10 rounded-lg flex items-center justify-center cursor-default hover:scale-105 transition-transform">
             <img
-              src="/images/logo.png"
+              src={theme === "dark" ? "/images/logo_dark.png" : "/images/logo.png"}
               alt="Logo"
               className="h-full w-full object-contain"
             />

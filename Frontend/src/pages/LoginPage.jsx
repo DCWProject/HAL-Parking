@@ -12,6 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import {useTheme} from "@/context/ThemeContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +34,7 @@ export default function LoginPage() {
       // (This logic might already be in a ThemeProvider, but ensuring the class is correct helps)
       navigate("/dashboard");
     } catch (err) {
+      console.log("error", err);
       setError("Invalid credentials. Please checking your email and password.");
     } finally {
       setIsLoading(false);
@@ -43,9 +46,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-500">
         <Card className="border-border/50 shadow-xl bg-card/50 dark:bg-zinc-900/90 backdrop-blur-sm dark:border-zinc-800 dark:shadow-2xl dark:shadow-black/20">
           <CardHeader className="space-y-4 flex flex-col items-center pb-2">
-            <div className="w-20 h-20 relative mb-4 p-2 rounded-2xl bg-white dark:bg-white/5 shadow-sm ring-1 ring-border/50 flex items-center justify-center overflow-hidden">
+            <div className="w-auto h-20 mb-4">
               <img
-                src="/images/logo.png"
+                src= {theme === "dark" ? "/images/logo_full_dark.png" : "/images/logo_full.png"}
                 alt="InteliPark Logo"
                 className="w-full h-full object-contain"
               />

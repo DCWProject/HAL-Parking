@@ -122,6 +122,16 @@
 }
 
 @layer utilities {
+
+  /* live diplay css */
+
+  .live-header-bg {
+    background-color: #090224;
+  }
+  .live-body-bg{
+    background-color: #090235;
+  }
+
   .fill-mode-forwards {
     animation-fill-mode: forwards;
   }

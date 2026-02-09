@@ -1,0 +1,46 @@
+server {
+    listen 80;
+    server_name 192.168.2.146;
+
+    # Frontend Static Files
+    location / {
+        root /home/intelipark/InteliPark/Frontend/dist;
+        index index.html index.htm;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API Proxy
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # API Documentation (Optional)
+    location /docs {
+        proxy_pass http://127.0.0.1:8000/docs;
+        proxy_set_header Host $host;
+    }
+
+    location /redoc {
+        proxy_pass http://127.0.0.1:8000/redoc;
+        proxy_set_header Host $host;
+    }
+
+    location /openapi.json {
+        proxy_pass http://127.0.0.1:8000/openapi.json;
+        proxy_set_header Host $host;
+    }
+
+    # Websocket Support
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}

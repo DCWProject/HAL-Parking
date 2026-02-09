@@ -32,7 +32,7 @@ export default function AddSectionDialog({ areaId, onSectionAdded }) {
       await api.post("/sections/", {
         name,
         section_code: sectionCode,
-        parking_area_id: areaId,
+        parking_area: areaId,
       });
       onSectionAdded();
       setOpen(false);

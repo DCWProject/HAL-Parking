@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import api from "@/services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wifi, WifiOff } from "lucide-react";
-
-// Placeholder for Logo - replace with actual path if available or use a text placeholder
-const YOUR_LOGO = "/logo.png"; // Replace with actual logo path
-const VENDOR_LOGO = "/logo.png"; // Replace with actual vendor logo
 
 export default function LiveDisplay() {
   const { id } = useParams();
@@ -14,7 +9,6 @@ export default function LiveDisplay() {
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [areaName, setAreaName] = useState("Smart Parking");
-  const [totalSections, setTotalSections] = useState(0);
 
   // WebSocket Connection Logic
   const wsRef = useRef(null);
@@ -30,12 +24,19 @@ export default function LiveDisplay() {
       return;
     }
 
+    const base = import.meta.env.VITE_API_BASE;
+    let wsUrl;
+    if (base.startsWith("https")) {
+      wsUrl = base.replace("https", "wss");
+    } else {
+      wsUrl = base.replace("http", "ws");
+    }
     // Connect using area_code
     const urlParams = targetAreaId ? `?area_code=${targetAreaId}` : "";
-    const wsUrl = `ws://localhost:8000/ws/live${urlParams}`;
-    console.log("Connecting to WS:", wsUrl);
+    const finalWsUrl = wsUrl + `/ws/live/${urlParams}`;
+    console.log("Connecting to WS:", finalWsUrl);
 
-    const ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(finalWsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -72,7 +73,6 @@ export default function LiveDisplay() {
       if (msg.type === "init_live_display") {
         if (msg.area_name) setAreaName(msg.area_name);
         setSections(msg.sections || []);
-        setTotalSections(msg.total_sections || 0);
         setLoading(false);
       } else if (msg.type === "live_slots_update") {
         // Update spots for a specific section (replace entire list with new available spots)
@@ -113,7 +113,7 @@ export default function LiveDisplay() {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch((err) => {
         console.error(
-          `Error attempting to enable full-screen mode: ${err.message} (${err.name})`
+          `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
         );
       });
     } else {
@@ -132,20 +132,16 @@ export default function LiveDisplay() {
   }
 
   return (
-    <div className="h-screen w-screen bg-black text-white overflow-hidden flex flex-col font-sans select-none cursor-none">
+    <div className="h-screen w-screen live-body-bg text-white overflow-hidden flex flex-col font-sans select-none cursor-none">
       {/* --- HEADER (15%) --- */}
-      <header className="h-[15%] flex items-center justify-between px-10 bg-neutral-900 border-b-4 border-neutral-800 shadow-2xl z-10">
+      <header className="h-[15%] flex items-center justify-between px-10 live-header-bg border-b-4 border-gray-500 shadow-2xl z-10">
         {/* Left: Our Logo */}
         <div className="flex items-center gap-4">
-          <div className="h-20 w-20 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <span className="text-3xl font-black tracking-tighter">IP</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-bold text-blue-400">INTELI</span>
-            <span className="text-xl font-bold text-white tracking-widest">
-              PARK
-            </span>
-          </div>
+          <img
+            src={"/images/logo_full_dark.png"}
+            className="h-20 w-auto"
+            alt="Vendor"
+          />
         </div>
 
         {/* Center: Area Name */}
@@ -158,30 +154,31 @@ export default function LiveDisplay() {
             {areaName}
           </h1>
           <div className="flex items-center gap-2 mt-2">
-            <div className="flex items-center gap-2">
-              {isConnected ? (
+            {isConnected ? (
+              <div className="flex items-center gap-2">
                 <Wifi size={24} className="text-green-500" />
-              ) : (
+                <span className="text-lg text-green-400 font-medium tracking-wide">
+                  LIVE AVAILABILITY
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
                 <WifiOff size={24} className="text-red-500" />
-              )}
-            </div>
-            <span className="text-lg text-green-400 font-medium tracking-wide">
-              LIVE AVAILABILITY
-            </span>
+                <span className="text-lg text-red-400 font-medium tracking-wide">
+                  OFFLINE
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right: Vendor Logo */}
         <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end">
-            <span className="text-sm text-neutral-400">POWERED BY</span>
-            <span className="text-xl font-bold text-orange-400">
-              INTELISPARKZ
-            </span>
-          </div>
-          <div className="h-20 w-20 bg-neutral-800 rounded-lg flex items-center justify-center border border-neutral-700">
-            <img src={"/images/logo.png"} alt="Vendor" />
-          </div>
+          <img
+            src={"/images/vendor_logo.png"}
+            className="h-20 w-auto"
+            alt="Vendor"
+          />
         </div>
       </header>
 
@@ -192,7 +189,7 @@ export default function LiveDisplay() {
           style={{
             gridTemplateColumns: `repeat(${Math.max(
               1,
-              sections.length
+              sections.length,
             )}, minmax(0, 1fr))`,
             gridTemplateRows: "1fr",
           }}
@@ -200,48 +197,91 @@ export default function LiveDisplay() {
           {sections.map((section) => (
             <div
               key={section.id}
-              className="bg-neutral-900/50 border border-neutral-800 rounded-3xl p-4 flex flex-col shadow-xl backdrop-blur-sm"
+              className="border border-white/30 rounded-3xl p-4 flex flex-col shadow-xl backdrop-blur-sm live-header-bg"
             >
-              {/* Section Header */}
+              {/* SECTION HEADER */}
               <div className="text-center mb-4 pb-2">
-                <h2 className="text-6xl font-black text-neutral-300 tracking-wide uppercase">
+                <h2 className="text-6xl font-black text-white tracking-wide uppercase">
                   {section.section_code}
                 </h2>
               </div>
 
-              {/* Spots Grid (Always 4 slots) */}
+              {/* SPOTS GRID */}
               <div className="flex-1 grid grid-cols-1 grid-rows-4 gap-4">
                 {Array.from({ length: 4 }).map((_, i) => {
                   const spot = section.spots[i];
-                  // Logic: If spot exists AND is available -> Green. Else -> Red (Occupied or Placeholder)
                   const isAvailable = spot && spot.status === "AVAILABLE";
+                  const isOffline = spot && spot.status === "OFFLINE";
+
+                  /* ---------------------------
+               CARD STYLE CONFIG
+            ---------------------------- */
+                  let bgClass = "bg-red-600 border border-red-400/20";
+                  let glowColor = "rgba(239,68,68,0.55)";
+                  let text = "FULL";
+
+                  if (isAvailable) {
+                    bgClass = "bg-emerald-500 border border-emerald-400/20";
+                    glowColor = "rgba(16,185,129,0.6)";
+                    text = "AVAILABLE";
+                  }
 
                   return (
                     <motion.div
                       key={spot ? spot.id : `placeholder-${section.id}-${i}`}
                       layout
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className={`relative rounded-2xl flex flex-col items-center justify-center overflow-hidden shadow-lg border-t border-white/10 ${
-                        isAvailable
-                          ? "bg-gradient-to-br from-green-500 to-green-700 shadow-green-900/50"
-                          : "bg-gradient-to-br from-red-600 to-red-800 shadow-red-900/50 grayscale-[0.2]"
-                      }`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, ease: "easeOut" }}
+                      className={`relative rounded-2xl flex flex-col items-center justify-center
+                            overflow-hidden shadow-lg ${bgClass}`}
                     >
-                      {/* Status Text */}
-                      <span className="text-sm md:text-lg font-bold text-white/80 mb-0 md:mb-1 uppercase tracking-widest">
-                        {isAvailable ? "Available" : ""}
+                      {/* NEON GLOW OVERLAY */}
+                      <motion.div
+                        className="absolute inset-0 rounded-2xl pointer-events-none"
+                        animate={{
+                          opacity: isAvailable ? [0.25, 0.45, 0.25] : 0.35,
+                        }}
+                        transition={{
+                          duration: isAvailable ? 3 : 0,
+                          repeat: isAvailable ? Infinity : 0,
+                          ease: "easeInOut",
+                        }}
+                        style={{
+                          boxShadow: `0 0 40px ${glowColor}`,
+                        }}
+                      />
+
+                      {/* OFFLINE ICON */}
+                      {isOffline && (
+                        <span className="absolute top-2 right-2 w-5 h-5 bg-black/30 rounded-full flex items-center justify-center z-10">
+                          <WifiOff size={14} className="text-white" />
+                        </span>
+                      )}
+
+                      {/* SPOT CODE BADGE (WHEN FULL/OFFLINE) */}
+                      {!isAvailable && spot && (
+                        <span
+                          className="absolute bottom-2 right-2 text-sm px-2 h-6
+                                   bg-black/30 rounded-md flex items-center justify-center z-10 text-white"
+                        >
+                          {spot.spot_code}
+                        </span>
+                      )}
+
+                      {/* STATUS LABEL */}
+                      <span className="text-sm md:text-lg font-bold text-white/80 mb-1 uppercase tracking-widest z-10">
+                        {text === "AVAILABLE" ? "Available" : ""}
                       </span>
 
-                      {/* Spot Code or Icon */}
+                      {/* MAIN CONTENT */}
                       {isAvailable && spot ? (
-                        <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">
+                        <span className="text-5xl md:text-7xl font-black text-white tracking-tight z-10">
                           {spot.spot_code}
-                          {/* Showing only the number part if preferred, or full code */}
                         </span>
                       ) : (
-                        <span className="text-3xl md:text-4xl font-bold text-white/80 tracking-widest uppercase transform -rotate-12">
-                          FULL
+                        <span className="text-3xl md:text-6xl font-bold text-white/80 tracking-widest uppercase  z-10">
+                          {text}
                         </span>
                       )}
                     </motion.div>
