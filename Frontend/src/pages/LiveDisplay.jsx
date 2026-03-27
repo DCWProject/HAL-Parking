@@ -134,13 +134,17 @@ export default function LiveDisplay() {
   return (
     <div className="h-screen w-screen live-body-bg text-white overflow-hidden flex flex-col font-sans select-none cursor-none">
       {/* --- HEADER (15%) --- */}
-      <header className="h-[15%] flex items-center justify-between px-10 live-header-bg border-b-4 border-gray-500 shadow-2xl z-10">
+      <header
+        className="h-[15%] flex items-center justify-between live-header-bg border-b-4 border-gray-500 shadow-2xl z-10"
+        style={{ paddingInline: "3vw" }}
+      >
         {/* Left: Our Logo */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center" style={{ gap: "1vw" }}>
           <img
             src={"/images/logo_full_dark.png"}
-            className="h-20 w-auto"
-            alt="Vendor"
+            style={{ height: "10vh" }}
+            className="w-auto object-contain"
+            alt="Logo"
           />
         </div>
 
@@ -148,23 +152,39 @@ export default function LiveDisplay() {
         <div className="flex flex-col items-center">
           <h1
             onDoubleClick={toggleFullScreen}
-            className="text-6xl font-black tracking-tight text-white uppercase drop-shadow-md select-none cursor-pointer hover:text-gray-200 transition-colors"
+            className="font-black tracking-tight text-white uppercase drop-shadow-md select-none cursor-pointer hover:text-gray-200 transition-colors"
+            style={{ fontSize: "7vh", lineHeight: 1.1 }}
             title="Double click to toggle Full Screen"
           >
             {areaName}
           </h1>
-          <div className="flex items-center gap-2 mt-2">
+          <div
+            className="flex items-center"
+            style={{ gap: "1vw", marginTop: "0.5vh" }}
+          >
             {isConnected ? (
-              <div className="flex items-center gap-2">
-                <Wifi size={24} className="text-green-500" />
-                <span className="text-lg text-green-400 font-medium tracking-wide">
+              <div className="flex items-center" style={{ gap: "0.8vw" }}>
+                <Wifi
+                  style={{ width: "2.5vh", height: "2.5vh" }}
+                  className="text-green-500"
+                />
+                <span
+                  className="text-green-400 font-semibold tracking-widest uppercase"
+                  style={{ fontSize: "2.2vh" }}
+                >
                   LIVE AVAILABILITY
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <WifiOff size={24} className="text-red-500" />
-                <span className="text-lg text-red-400 font-medium tracking-wide">
+              <div className="flex items-center" style={{ gap: "0.8vw" }}>
+                <WifiOff
+                  style={{ width: "2.5vh", height: "2.5vh" }}
+                  className="text-red-500"
+                />
+                <span
+                  className="text-red-400 font-semibold tracking-widest uppercase"
+                  style={{ fontSize: "2.2vh" }}
+                >
                   OFFLINE
                 </span>
               </div>
@@ -173,10 +193,11 @@ export default function LiveDisplay() {
         </div>
 
         {/* Right: Vendor Logo */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center" style={{ gap: "1vw" }}>
           <img
             src={"/images/vendor_logo.png"}
-            className="h-20 w-auto"
+            style={{ height: "10vh" }}
+            className="w-auto object-contain"
             alt="Vendor"
           />
         </div>
