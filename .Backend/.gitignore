@@ -1,0 +1,23 @@
+# Ignore virtual environment
+venv/
+
+# Ignore database files
+*.db
+
+# Ignore logs
+*.log
+
+# Ignore IDE files
+.idea/
+
+# Ignore temporary files
+__pycache__/
+
+# Ignore environment variables
+.env
+
+# Ignore build files
+build/
+
+# Ignore temporary files
+tmp/
