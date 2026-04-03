@@ -228,8 +228,8 @@ export default function LiveDisplay() {
               </div>
 
               {/* SPOTS GRID */}
-              <div className="flex-1 grid grid-cols-1 grid-rows-4 gap-4">
-                {Array.from({ length: 4 }).map((_, i) => {
+              <div className="flex-1 grid grid-cols-1 grid-rows-6 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => {
                   const spot = section.spots[i];
                   const isAvailable = spot && spot.status === "AVAILABLE";
                   const isOffline = spot && spot.status === "OFFLINE";
@@ -242,9 +242,9 @@ export default function LiveDisplay() {
                   let text = "FULL";
 
                   if (isAvailable) {
-                    bgClass = "bg-emerald-500 border border-emerald-400/20";
+                    bgClass = "bg-green-500 border border-green-400/20";
                     glowColor = "rgba(16,185,129,0.6)";
-                    text = "AVAILABLE";
+                    //text = "AVAILABLE";
                   }
 
                   return (
@@ -291,9 +291,9 @@ export default function LiveDisplay() {
                       )}
 
                       {/* STATUS LABEL */}
-                      <span className="text-sm md:text-lg font-bold text-white/80 mb-1 uppercase tracking-widest z-10">
+                      {/* <span className="text-sm md:text-lg font-bold text-white/80 mb-1 uppercase tracking-widest z-10">
                         {text === "AVAILABLE" ? "Available" : ""}
-                      </span>
+                      </span> */}
 
                       {/* MAIN CONTENT */}
                       {isAvailable && spot ? (
