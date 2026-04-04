@@ -18,8 +18,6 @@ def get_live_display_data_for_section(section_id):
     )
     final_spots.extend(avail_spots)
 
-    print("available spots", final_spots)
-
     # 2. If slots remaining, fill with Offline (to alert admin/user)
     if len(final_spots) < max_spots:
         needed = max_spots - len(final_spots)
@@ -85,9 +83,6 @@ def process_sensor_data(device_uid, spots_data):
 
         spot = Spot.objects.filter(spot_code=spot_code).first()
         if spot:
-            if spot.status != status:
-                logger.info(f"Spot {spot.spot_code}: {status}")
-
             spot.status = status
             spot.last_updated = timezone.now()
             spot.save()
@@ -106,17 +101,6 @@ def process_sensor_data(device_uid, spots_data):
     if updated_spots:
         channel_layer = get_channel_layer()
         area_code = device.parking_area.area_code if device.parking_area else "default"
-
-        # Broadcast to dashboard (Send ALL updates, dashboard handles logic)
-        async_to_sync(channel_layer.group_send)(
-            f"dashboard_{area_code}",
-            {
-                "type": "spot_update",
-                "device": device_uid,
-                "timestamp": timezone.now().isoformat(),
-                "data": updated_spots,
-            },
-        )
 
         # Broadcast to parking_detail (Send ALL updates, similar to dashboard)
         async_to_sync(channel_layer.group_send)(

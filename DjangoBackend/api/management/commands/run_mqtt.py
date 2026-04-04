@@ -53,32 +53,18 @@ class Command(BaseCommand):
                 topic_parts = msg.topic.split("/")
                 if len(topic_parts) != 4:
                     return
+                
+                # If the message has the retain flag, it's from the past. Skip it.
+                # if msg.retain:
+                #     self.stdout.write(self.style.WARNING(f"Filtered out RETAINED message from {msg.topic}"))
+                #     return
 
                 area_code = topic_parts[1]
                 device_uid = topic_parts[2]
                 msg_type = topic_parts[3]
                 payload = json.loads(msg.payload.decode())
 
-                # --- 1. HANDLE LOGS (Forward to WebSockets) ---
-                if msg_type == "log":
-                    log_msg = payload.get("log", "")
-                    self.stdout.write(f"LOG [{device_uid}]: {log_msg}")
-
-                    #channel_layer = get_channel_layer()
-                    
-                    # Log to console so it shows in journalctl
-
-                    # data = {
-                    #     "type": "device_log",
-                    #     "device": device_uid,
-                    #     "log": log_msg,
-                    #     "timestamp": timezone.now().isoformat()
-                    # }
-                    # async_to_sync(channel_layer.group_send)(f"parking_detail_{area_code}", data)
-                    # async_to_sync(channel_layer.group_send)(f"device_logs_{device_uid}", data)
-                    return
-
-                # --- 2. HANDLE STATUS (Update Database) ---
+                # --- 1. HANDLE STATUS (Update Database) ---
                 if msg_type == "status":
                     self.stdout.write(self.style.NOTICE(f"STATUS received from {device_uid}"))
                     
@@ -106,11 +92,6 @@ class Command(BaseCommand):
                             device.sections.add(*sections)
 
                         device.save()
-                        
-                        # Respond with Config
-                        if reported_spots:
-                            send_device_config(client, device, reported_spots)
-
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Error processing message: {str(e)}"))
 
@@ -146,23 +127,5 @@ class Command(BaseCommand):
             client.disconnect()
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Critical Error: {e}"))
-
-def send_device_config(client, device, spot_codes):
-    """Helper to push config back to the ESP32/Device"""
-    query = Spot.objects.filter(spot_code__in=spot_codes)
-    if device.parking_area:
-         query = query.filter(section__parking_area=device.parking_area)
-
-    spots = query.all()
-    if not spots:
-        return
-
-    config_payload = {
-        "action": "update_config",
-        "debug": device.debug_mode,
-        "spots": [{"spot": s.spot_code, "min_dist": s.min_dist, "max_dist": s.max_dist} for s in spots]
-    }
-    
-    area_code = device.parking_area.area_code if device.parking_area else "default"
-    topic = f"parking/{area_code}/{device.device_uid}/command"
-    client.publish(topic, json.dumps(config_payload), retain=False)
+            client.loop_stop()
+            client.disconnect()

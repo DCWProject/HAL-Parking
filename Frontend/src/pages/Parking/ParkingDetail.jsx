@@ -6,7 +6,6 @@ import { AnimatePresence } from "framer-motion";
 
 import api from "@/services/api";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import FloatingLogConsole from "@/components/FloatingLogConsole";
 
 // Sub-components
 import ParkingHeader from "./ParkingDetails/ParkingHeader";
@@ -28,9 +27,6 @@ export default function ParkingDetail() {
   });
   const [actionLoading, setActionLoading] = useState(false);
   
-  // Real-time logs: { [deviceUid]: ["log line 1", "log line 2"] }
-  const [deviceLogs, setDeviceLogs] = useState({});
-  const [detachedLogDeviceId, setDetachedLogDeviceId] = useState(null); // device ID
 
   useEffect(() => {
     const fetchParkingArea = async () => {
@@ -48,43 +44,7 @@ export default function ParkingDetail() {
     fetchParkingArea();
   }, [id]);
 
-  const initiateRestart = (device) => {
-    setConfirmDialog({
-        isOpen: true,
-        deviceId: device.id,
-        deviceUid: device.device_uid,
-        action: "restart"
-    });
-  };
 
-  const initiateDebugToggle = (device, currentState) => {
-    setConfirmDialog({
-        isOpen: true,
-        deviceId: device.id,
-        deviceUid: device.device_uid,
-        action: "debug",
-        nextDebugState: !currentState
-    });
-  };
-
-  const initiateDelete = (device) => {
-      setConfirmDialog({
-          isOpen: true,
-          action: "delete",
-          deviceUid: device.device_uid,
-          deviceId: device.id,
-          nextDebugState: null
-      });
-  };
-
-  const initiateResetSpots = (device) => {
-    setConfirmDialog({
-        isOpen: true,
-        deviceId: device.id,
-        deviceUid: device.device_uid,
-        action: "reset_spots"
-    });
-  };
 
   const handleConfirmAction = async () => {
     if (!confirmDialog.deviceId) return;
@@ -109,13 +69,6 @@ export default function ParkingDetail() {
                 };
             });
             
-            // Clear logs if disabling
-            if (!confirmDialog.nextDebugState) {
-                setDeviceLogs(prev => ({
-                    ...prev,
-                    [confirmDialog.deviceUid]: []
-                }));
-            }
         } else if (confirmDialog.action === "delete") {
              await api.delete(`/devices/${confirmDialog.deviceId}/`);
              window.location.reload();
@@ -183,18 +136,6 @@ export default function ParkingDetail() {
 
           return newArea;
         });
-      } else if (data.type === "device_log") {
-          // Handle real-time logs
-          const { device, log, timestamp } = data;
-          setDeviceLogs(prev => {
-              const currentLogs = prev[device] || [];
-              const newLog = `[${timestamp.split('T')[1].split('.')[0]}] ${log}`;
-              // keep max 50 lines (Chronological: Oldest -> Newest)
-              return {
-                  ...prev,
-                  [device]: [...currentLogs, newLog].slice(-50)
-              };
-          });
       }
     };
 
@@ -269,18 +210,14 @@ export default function ParkingDetail() {
         onConfirm={handleConfirmAction}
         title={
             confirmDialog.action === "restart" ? "Restart Device" : 
-            confirmDialog.action === "delete" ? "Delete Device" :
-            confirmDialog.action === "reset_spots" ? "Reset Spot Status" :
-            "Update Debug Mode"
+            confirmDialog.action === "delete" ? "Delete Device" : "Reset Spot Status"
         }
         description={
             confirmDialog.action === "restart" 
             ? `Are you sure you want to restart device ${confirmDialog.deviceUid}? This may take a few moments.`
             : confirmDialog.action === "delete"
             ? `Are you sure you want to delete device ${confirmDialog.deviceUid}? This action cannot be undone.`
-            : confirmDialog.action === "reset_spots"
-            ? `Are you sure you want to manually reset all spots for ${confirmDialog.deviceUid} to AVAILABLE? This is for synchronization only.`
-            : `Are you sure you want to ${confirmDialog.nextDebugState ? 'enable' : 'disable'} debug mode for device ${confirmDialog.deviceUid}? Logs will appear in real-time but won't be saved.`
+            :  `Are you sure you want to manually reset all spots for ${confirmDialog.deviceUid} to AVAILABLE? This is for synchronization only.`
         }
         confirmText={
             confirmDialog.action === "restart" ? "Restart" : 
@@ -316,28 +253,12 @@ export default function ParkingDetail() {
 
           <DeviceList 
             devices={parkingArea.devices}
-            detachedLogDeviceId={detachedLogDeviceId}
             onRestart={(id, uid) => setConfirmDialog({ isOpen: true, deviceId: id, deviceUid: uid, action: "restart" })}
-            onToggleDebug={(id, uid, current) => setConfirmDialog({ isOpen: true, deviceId: id, deviceUid: uid, action: "debug", nextDebugState: !current })}
             onDelete={(id, uid) => setConfirmDialog({ isOpen: true, deviceId: id, deviceUid: uid, action: "delete" })}
             onResetSpots={(id, uid) => setConfirmDialog({ isOpen: true, deviceId: id, deviceUid: uid, action: "reset_spots" })}
-            onDetachLogs={(id) => setDetachedLogDeviceId(id)}
-            setDetachedLogDeviceId={setDetachedLogDeviceId}
           />
         </div>
       </div>
-
-     {/* Floating Log Console */}
-     <AnimatePresence>
-        {detachedLogDeviceId && parkingArea?.devices && (
-            <FloatingLogConsole 
-                key="floating-console"
-                device={parkingArea.devices.find(d => d.id === detachedLogDeviceId)}
-                logs={deviceLogs[parkingArea.devices.find(d => d.id === detachedLogDeviceId)?.device_uid] || []}
-                onClose={() => setDetachedLogDeviceId(null)}
-            />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

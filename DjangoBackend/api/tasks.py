@@ -23,16 +23,10 @@ def Device_offline():
     if not offline_devices.exists():
         return
 
-    channel_layer = get_channel_layer()
     for device in offline_devices:
         device.is_online = False
         device.save()
         
-        area_code = device.parking_area.area_code if device.parking_area else "default"
-        async_to_sync(channel_layer.group_send)(
-            f"dashboard_{area_code}",
-            {"type": "device_offline", "device_uid": device.device_uid},
-        )
 
 def Spot_offline():
     """
@@ -79,7 +73,6 @@ def Spot_offline():
             "data": data,
         }
         
-        async_to_sync(channel_layer.group_send)(f"dashboard_{a_code}", payload)
         async_to_sync(channel_layer.group_send)(f"parking_detail_{a_code}", payload)
 
         # Live Display payload

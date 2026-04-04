@@ -148,7 +148,6 @@ class SpotViewSet(BaseViewSet):
                 "message": "Bulk spot creation successful",
             }
         )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DeviceViewSet(BaseViewSet):
@@ -247,9 +246,7 @@ class DeviceViewSet(BaseViewSet):
             async_to_sync(channel_layer.group_send)(
                 f"parking_detail_{area_code}", event
             )
-            async_to_sync(channel_layer.group_send)(
-                f"dashboard_{area_code}", event
-            )
+            
 
         return Response({
             "message": f"Reset {updated_count} spots to AVAILABLE for device {device.device_uid}",
