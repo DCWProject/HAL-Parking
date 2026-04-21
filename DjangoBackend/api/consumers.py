@@ -61,7 +61,7 @@ class LiveDisplayConsumer(AsyncWebsocketConsumer):
                         {
                             "id": s.id,
                             "spot_code": s.spot_code,
-                            "status": s.status,
+                            "status": s.status if s.status != "OFFLINE" else s.offline_last_status,
                             "section_id": s.section_id,
                         }
                         for s in top_spots

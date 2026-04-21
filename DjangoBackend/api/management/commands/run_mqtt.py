@@ -102,25 +102,8 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f"Connecting to {broker}:{port}..."))
             client.connect(broker, port, 60)
             client.loop_start() 
-            
             self.stdout.write(self.style.SUCCESS("MQTT Listener is running. Press Ctrl+C to stop."))
-
-            while True:
-                # Background Task: Cleanup Expired Debug Modes
-                cutoff = timezone.now() - timezone.timedelta(hours=1)
-                expired = Device.objects.filter(debug_mode=True, debug_mode_updated_at__lt=cutoff)
-                
-                for d in expired:
-                    self.stdout.write(self.style.WARNING(f"Auto-disabling debug for {d.device_uid}"))
-                    d.debug_mode = False
-                    d.save()
-                    
-                    # Notify device of config change
-                    topic = f"parking/{d.parking_area.area_code if d.parking_area else 'default'}/{d.device_uid}/command"
-                    client.publish(topic, json.dumps({"action": "update_config", "debug": False, "spots": []}))
-
-                time.sleep(60)
-                
+    
         except KeyboardInterrupt:
             self.stdout.write(self.style.WARNING("Stopping MQTT Listener..."))
             client.loop_stop()

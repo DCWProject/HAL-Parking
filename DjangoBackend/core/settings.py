@@ -187,3 +187,6 @@ MQTT_BROKER_HOST = config("MQTT_BROKER_HOST", default="localhost")
 MQTT_BROKER_PORT = config("MQTT_BROKER_PORT", default=1883, cast=int)
 MQTT_BROKER_USERNAME = config("MQTT_BROKER_USERNAME", default="inteliParking")
 MQTT_BROKER_PASSWORD = config("MQTT_BROKER_PASSWORD", default="nopassword")
+
+#if true return live display data to all spot like 18 spot
+IS_DISPLAY_GRID_VIEW = config("IS_DISPLAY_GRID_VIEW", default=True, cast=bool)

@@ -7,6 +7,9 @@ import AppLayout from "@/layouts/AppLayout";
 import BlankLayout from "@/layouts/BlankLayout";
 import Dashboard from "@/pages/Dashboard";
 import LiveDisplay from "@/pages/LiveDisplay";
+import LedDisplay from "@/pages/LedDisplay";
+import LedGridDisplay from "./pages/LedGridDisplay";
+import LedGridVerticalDisplay from "./pages/LedGridVerticalDisplay";
 import ParkingList from "@/pages/Parking/ParkingList";
 import ParkingDetail from "@/pages/Parking/ParkingDetail";
 import ManageParking from "@/pages/Parking/ManageParking/index";
@@ -37,6 +40,12 @@ export default function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/live" element={<LiveDisplay />} />
                 <Route path="/live/:id" element={<LiveDisplay />} />
+                <Route path="/led/:id" element={<LedDisplay />} />
+                <Route path="/led-grid/:id" element={<LedGridDisplay />} />
+                <Route
+                  path="/led-grid-vertical/:id"
+                  element={<LedGridVerticalDisplay />}
+                />
               </Route>
 
               <Route path="/" element={<Navigate to="/dashboard" />} />

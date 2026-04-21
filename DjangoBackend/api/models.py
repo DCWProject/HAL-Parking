@@ -59,6 +59,9 @@ class Spot(models.Model):
         ParkingSection, on_delete=models.CASCADE, related_name="spots"
     )
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="OFFLINE")
+    offline_last_status = models.CharField(max_length=50, 
+                                        choices=[("AVAILABLE", "Available"), ("OCCUPIED", "Occupied")], 
+                                        default="AVAILABLE")
     min_dist = models.IntegerField(default=50)
     max_dist = models.IntegerField(default=100)
     last_updated = models.DateTimeField(auto_now=True)

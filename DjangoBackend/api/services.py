@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.conf import settings
 from .models import Device, Spot, ParkingSection, ParkingArea
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -7,26 +8,34 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_live_display_data_for_section(section_id):
-    max_spots = 6
-    final_spots = []
-    # 1. Priority: Available
-    avail_spots = list(
-        Spot.objects.filter(section_id=section_id, status="AVAILABLE").order_by(
-            "spot_code"
-        )[:max_spots]
-    )
-    final_spots.extend(avail_spots)
 
-    # 2. If slots remaining, fill with Offline (to alert admin/user)
-    if len(final_spots) < max_spots:
-        needed = max_spots - len(final_spots)
-        offline_spots = list(
-            Spot.objects.filter(
-                section_id=section_id, status__in=["OFFLINE", "OCCUPIED"]
-            ).order_by("status")[:needed]
+
+def get_live_display_data_for_section(section_id):
+    final_spots = []
+    
+    if settings.IS_DISPLAY_GRID_VIEW:
+        all_spot = Spot.objects.filter(section_id=section_id).order_by("spot_code")
+        final_spots.extend(all_spot)
+
+    else:
+        max_spots = 6
+        # 1. Priority: Available
+        avail_spots = list(
+            Spot.objects.filter(section_id=section_id, status="AVAILABLE").order_by(
+                "spot_code"
+            )[:max_spots]
         )
-        final_spots.extend(offline_spots)
+        final_spots.extend(avail_spots)
+        # 2. If slots remaining, fill with Offline (to alert admin/user)
+        if len(final_spots) < max_spots:
+            needed = max_spots - len(final_spots)
+            offline_spots = list(
+                Spot.objects.filter(
+                    section_id=section_id, status__in=["OFFLINE", "OCCUPIED"]
+                ).order_by("status")[:needed]
+            )
+            final_spots.extend(offline_spots)
+
     return final_spots
 
 
@@ -85,6 +94,8 @@ def process_sensor_data(device_uid, spots_data):
         if spot:
             spot.status = status
             spot.last_updated = timezone.now()
+            if status != "OFFLINE":
+                spot.offline_last_status = status
             spot.save()
 
             updated_spots.append(
@@ -123,7 +134,7 @@ def process_sensor_data(device_uid, spots_data):
                 {
                     "id": s.id,
                     "spot_code": s.spot_code,
-                    "status": s.status,
+                    "status": s.status if s.status != "OFFLINE" else s.offline_last_status,
                     "section_id": s.section_id,
                 }
                 for s in top_spots
