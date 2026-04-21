@@ -33,7 +33,8 @@ def Spot_offline():
     Check for spots that have not been updated for more than 1 minute.
     """
     logger.info("Checking for offline spots...")
-    threshold = timezone.now() - timedelta(minutes=1)
+    now = timezone.now()
+    threshold = now - timedelta(minutes=1)
     
     # Filter spots that are NOT currently OFFLINE but haven't been updated in 1 min
     offline_spots = Spot.objects.exclude(status="OFFLINE").filter(last_updated__lt=threshold)
@@ -51,7 +52,7 @@ def Spot_offline():
         affected_sections[sec.id] = (area.area_code, area.name)
     
     # Mark as OFFLINE
-    offline_spots.update(status="OFFLINE")
+    offline_spots.update(status="OFFLINE",status_changed_at=now)
 
     # Broadcast updates per section
     for section_id, (a_code, a_name) in affected_sections.items():

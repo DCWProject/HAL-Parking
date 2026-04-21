@@ -129,11 +129,11 @@ const styles = `
   font-size: 18px;
 }
 
-@keyframes vgd-blinkAvailable {
-  0% { opacity: 1; }
-  50% { opacity: 0.75; }
-  100% { opacity: 1; }
-}
+// @keyframes vgd-blinkAvailable {
+//   0% { opacity: 1; }
+//   50% { opacity: 0.75; }
+//   100% { opacity: 1; }
+// }
 `;
 
 export default function LedGridVerticalDisplay() {

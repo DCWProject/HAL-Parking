@@ -106,9 +106,7 @@ export default function LedDisplay() {
   if (loading) {
     return (
       <div className="w-screen h-screen bg-black flex items-center justify-center text-white">
-        <div style={{ fontSize: "20px" }}>
-          Initializing Display...
-        </div>
+        <div style={{ fontSize: "20px" }}>Initializing Display...</div>
       </div>
     );
   }
@@ -164,12 +162,26 @@ export default function LedDisplay() {
             }}
           >
             {isConnected ? (
-              <div style={{ color: "#4ade80", display: "flex", alignItems: "center", gap: "4px" }}>
+              <div
+                style={{
+                  color: "#4ade80",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
                 <Wifi size={10} style={{ marginRight: "4px" }} />
                 <span style={{ fontSize: "12px" }}>LIVE</span>
               </div>
             ) : (
-              <div style={{ color: "#f87171", display: "flex", alignItems: "center", gap: "4px" }}>
+              <div
+                style={{
+                  color: "#f87171",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
                 <WifiOff size={10} style={{ marginRight: "4px" }} />
                 <span style={{ fontSize: "12px" }}>OFFLINE</span>
               </div>
@@ -202,118 +214,121 @@ export default function LedDisplay() {
             gap: "6px",
           }}
         >
-          {sections.map((section) => (
-            <div
-              key={section.id}
-              style={{
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "8px",
-                padding: "6px",
-                display: "flex",
-                flexDirection: "column",
-                background: "#090224",
-              }}
-            >
-              {/* SECTION TITLE */}
+          {sections.map((section) => {
+            // 1. Sort spots: "AVAILABLE" first, then ordered by spot_code alphanumerically
+            const sortedSpots = [...(section.spots || [])].sort((a, b) => {
+              const isA_Avail = a.status === "AVAILABLE";
+              const isB_Avail = b.status === "AVAILABLE";
+
+              // Prioritize AVAILABLE status
+              if (isA_Avail && !isB_Avail) return -1;
+              if (!isA_Avail && isB_Avail) return 1;
+
+              // If statuses are the same, sort by spot_code (numeric: true handles A-2 vs A-10 correctly)
+              if (a.spot_code && b.spot_code) {
+                return a.spot_code.localeCompare(b.spot_code, undefined, {
+                  numeric: true,
+                });
+              }
+              return 0;
+            });
+
+            return (
               <div
+                key={section.id}
                 style={{
-                  textAlign: "center",
-                  marginBottom: "4px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "8px",
+                  padding: "6px",
+                  display: "flex",
+                  flexDirection: "column",
+                  background: "#090224",
                 }}
               >
+                {/* SECTION TITLE */}
                 <div
                   style={{
-                    fontSize: "30px",
-                    fontWeight: 900,
-                    lineHeight: 1,
+                    textAlign: "center",
+                    marginBottom: "4px",
                   }}
                 >
-                  {section.section_code}
+                  <div
+                    style={{
+                      fontSize: "30px",
+                      fontWeight: 900,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {section.section_code}
+                  </div>
+                </div>
+
+                {/* SPOTS */}
+                <div
+                  style={{
+                    flex: 1,
+                    display: "grid",
+                    gridTemplateRows: "repeat(6, 1fr)",
+                    gap: "4px",
+                  }}
+                >
+                  {Array.from({ length: 6 }).map((_, i) => {
+                    // 2. Safely grab from the sorted array
+                    const spot = sortedSpots[i];
+                    const isAvailable = spot && spot.status === "AVAILABLE";
+
+                    let bgColor = "#dc2626";
+                    let glowColor = "rgba(239,68,68,0.5)";
+                    let text = "FULL";
+
+                    if (isAvailable) {
+                      bgColor = "#22c55e";
+                      glowColor = "rgba(16,185,129,0.5)";
+                    }
+
+                    return (
+                      <motion.div
+                        key={spot ? spot.id : `${section.id}-${i}`}
+                        layout
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25 }}
+                        style={{
+                          background: bgColor,
+                          borderRadius: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          position: "relative",
+                          boxShadow: `0 0 16px ${glowColor}`,
+                        }}
+                      >
+                        {isAvailable && spot ? (
+                          <span
+                            style={{
+                              fontSize: "22px",
+                              fontWeight: 900,
+                            }}
+                          >
+                            {spot.spot_code}
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: "16px",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {text}
+                          </span>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* SPOTS */}
-              <div
-                style={{
-                  flex: 1,
-                  display: "grid",
-                  gridTemplateRows: "repeat(6, 1fr)",
-                  gap: "4px",
-                }}
-              >
-                {Array.from({ length: 6 }).map((_, i) => {
-                  const spot = section.spots[i];
-                  const isAvailable =
-                    spot && spot.status === "AVAILABLE";
-
-                  let bgColor = "#dc2626";
-                  let glowColor = "rgba(239,68,68,0.5)";
-                  let text = "FULL";
-
-                  if (isAvailable) {
-                    bgColor = "#22c55e";
-                    glowColor = "rgba(16,185,129,0.5)";
-                  }
-
-                  return (
-                    <motion.div
-                      key={spot ? spot.id : `${section.id}-${i}`}
-                      layout
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25 }}
-                      style={{
-                        background: bgColor,
-                        borderRadius: "6px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        position: "relative",
-                        boxShadow: `0 0 16px ${glowColor}`,
-                      }}
-                    >
-                      {/* {!isAvailable && spot && (
-                        <span
-                          style={{
-                            position: "absolute",
-                            bottom: "3px",
-                            right: "3px",
-                            fontSize: "9px",
-                            paddingLeft: "5px",
-                            paddingRight: "5px",
-                            background: "rgba(0,0,0,0.3)",
-                            borderRadius: "4px",
-                          }}
-                        >
-                          {spot.spot_code}
-                        </span>
-                      )} */}
-
-                      {isAvailable && spot ? (
-                        <span
-                          style={{
-                            fontSize: "22px",
-                            fontWeight: 900,
-                          }}
-                        >
-                          {spot.spot_code}
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            fontSize: "16px",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {text}
-                        </span>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </main>
     </div>

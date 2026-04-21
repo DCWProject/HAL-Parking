@@ -59,9 +59,15 @@ class Spot(models.Model):
         ParkingSection, on_delete=models.CASCADE, related_name="spots"
     )
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="OFFLINE")
-    offline_last_status = models.CharField(max_length=50, 
-                                        choices=[("AVAILABLE", "Available"), ("OCCUPIED", "Occupied")], 
-                                        default="AVAILABLE")
+    offline_last_status = models.CharField(
+        max_length=50,
+        choices=[("AVAILABLE", "Available"), ("OCCUPIED", "Occupied")],
+        default="AVAILABLE",
+    )
+    last_raw_status = models.CharField(max_length=50, default="OFFLINE")
+    raw_status_started_at = models.DateTimeField(null=True, blank=True)
+    status_changed_at = models.DateTimeField(null=True, blank=True)
+
     min_dist = models.IntegerField(default=50)
     max_dist = models.IntegerField(default=100)
     last_updated = models.DateTimeField(auto_now=True)
@@ -100,7 +106,7 @@ class Device(models.Model):
     is_online = models.BooleanField(default=True)
     debug_mode = models.BooleanField(default=False)
     debug_mode_updated_at = models.DateTimeField(null=True, blank=True)
-    
+
     # New M2M field
     sections = models.ManyToManyField(
         ParkingSection,
