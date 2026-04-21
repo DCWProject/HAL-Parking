@@ -101,9 +101,9 @@ class Command(BaseCommand):
         try:
             self.stdout.write(self.style.WARNING(f"Connecting to {broker}:{port}..."))
             client.connect(broker, port, 60)
-            client.loop_start() 
             self.stdout.write(self.style.SUCCESS("MQTT Listener is running. Press Ctrl+C to stop."))
-    
+            client.loop_forever()
+
         except KeyboardInterrupt:
             self.stdout.write(self.style.WARNING("Stopping MQTT Listener..."))
             client.loop_stop()
