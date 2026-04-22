@@ -22,7 +22,6 @@ def load_spot_cache():
 
 
 def update_spot_by_code(spot_code, new_status):
-
     now = timezone.now()
     try:
         spot = SPOT_CACHE.get(spot_code)
@@ -30,70 +29,75 @@ def update_spot_by_code(spot_code, new_status):
             return None
     except:
         return None
-    updated_fields = []
-    spot.last_updated = now
-    updated_fields.append("last_updated")
+    
+    try:
+        updated_fields = []
+        spot.last_updated = now
+        updated_fields.append("last_updated")
 
-    if not spot.raw_status_started_at:
-        spot.raw_status_started_at = now
-        spot.last_raw_status = new_status
-        updated_fields.extend(["raw_status_started_at", "last_raw_status"])
+        if not spot.raw_status_started_at:
+            spot.raw_status_started_at = now
+            spot.last_raw_status = new_status
+            updated_fields.extend(["raw_status_started_at", "last_raw_status"])
 
-    elif new_status != spot.last_raw_status:
-        spot.last_raw_status = new_status
-        spot.raw_status_started_at = now
-        updated_fields.extend(
-            [
-                "last_raw_status",
-                "raw_status_started_at",
-            ]
-        )
-
-    else:
-        duration = (now - spot.raw_status_started_at).total_seconds()
-        # Threshold selection
-        if new_status == "OCCUPIED":
-            threshold = settings.OCCUPIED_STABLE_SECONDS
-
-        elif new_status == "AVAILABLE":
-            threshold = settings.AVAILABLE_STABLE_SECONDS
+        elif new_status != spot.last_raw_status:
+            spot.last_raw_status = new_status
+            spot.raw_status_started_at = now
+            updated_fields.extend(
+                [
+                    "last_raw_status",
+                    "raw_status_started_at",
+                ]
+            )
 
         else:
-            threshold = settings.OFFLINE_STABLE_SECONDS
+            duration = (now - spot.raw_status_started_at).total_seconds()
+            # Threshold selection
+            if new_status == "OCCUPIED":
+                threshold = settings.OCCUPIED_STABLE_SECONDS
 
-        # Apply stable state
-        if duration >= threshold:
-
-            if new_status == "OFFLINE":
-
-                if spot.status != "OFFLINE":
-                    spot.status = "OFFLINE"
-                    spot.status_changed_at = now
-                    updated_fields.extend(
-                        [
-                            "status",
-                            "status_changed_at",
-                        ]
-                    )
+            elif new_status == "AVAILABLE":
+                threshold = settings.AVAILABLE_STABLE_SECONDS
 
             else:
+                threshold = settings.OFFLINE_STABLE_SECONDS
 
-                if spot.status != new_status:
+            # Apply stable state
+            if duration >= threshold:
 
-                    spot.status = new_status
-                    spot.offline_last_status = new_status
-                    spot.status_changed_at = now
+                if new_status == "OFFLINE":
 
-                    updated_fields.extend(
-                        [
-                            "status",
-                            "offline_last_status",
-                            "status_changed_at",
-                        ]
-                    )
+                    if spot.status != "OFFLINE":
+                        spot.status = "OFFLINE"
+                        spot.status_changed_at = now
+                        updated_fields.extend(
+                            [
+                                "status",
+                                "status_changed_at",
+                            ]
+                        )
 
-    spot.save(update_fields=updated_fields)
-    return spot
+                else:
+
+                    if spot.status != new_status:
+
+                        spot.status = new_status
+                        spot.offline_last_status = new_status
+                        spot.status_changed_at = now
+
+                        updated_fields.extend(
+                            [
+                                "status",
+                                "offline_last_status",
+                                "status_changed_at",
+                            ]
+                        )
+
+        spot.save(update_fields=updated_fields)
+        return spot
+    except Exception as e:
+        logger.error(f"Error updating spot {spot_code}: {str(e)}")
+        return None
 
 
 def get_live_display_data_for_section(section_id):
@@ -168,6 +172,7 @@ def process_sensor_data(device_uid, spots_data):
         device.save()
 
     updated_spots = []
+    load_spot_cache()  # Refresh cache to ensure we have the latest data before updates
     for spot_data in spots_data:
         spot_code = get_code(spot_data)
         status = spot_data.get("status").upper()
@@ -186,9 +191,7 @@ def process_sensor_data(device_uid, spots_data):
                     "section_id": spot.section.id,
                 }
             )
-
         else:
-
             logger.warning(f"Spot {spot_code} not found")
 
     if updated_spots:
@@ -196,15 +199,18 @@ def process_sensor_data(device_uid, spots_data):
         area_code = device.parking_area.area_code if device.parking_area else "default"
 
         # Broadcast to parking_detail (Send ALL updates, similar to dashboard)
-        async_to_sync(channel_layer.group_send)(
-            f"parking_detail_{area_code}",
-            {
-                "type": "spot_update",
-                "device": device_uid,
-                "timestamp": timezone.now().isoformat(),
-                "data": updated_spots,
-            },
-        )
+        try:
+            async_to_sync(channel_layer.group_send)(
+                f"parking_detail_{area_code}",
+                {
+                    "type": "spot_update",
+                    "device": device_uid,
+                    "timestamp": timezone.now().isoformat(),
+                    "data": updated_spots,
+                },
+            )
+        except Exception as e:
+            logger.error(f"Failed to send parking_detail update: {str(e)}")
 
         # Broadcast to live display (Use optimized logic)
         affected_section_ids = set(s["section_id"] for s in updated_spots)
@@ -224,16 +230,20 @@ def process_sensor_data(device_uid, spots_data):
                 for s in top_spots
             ]
 
-            async_to_sync(channel_layer.group_send)(
-                f"live_display_{area_code}",
-                {
-                    "type": "live_slots_update",
-                    "area_name": (
-                        device.parking_area.name if device.parking_area else ""
-                    ),
-                    "area_code": area_code,
-                    "section_id": sec_id,
-                    "data": data,
-                    "from": "live_display",
-                },
-            )
+            try:
+                async_to_sync(channel_layer.group_send)(
+                    f"live_display_{area_code}",
+                    {
+                        "type": "live_slots_update",
+                        "area_name": (
+                            device.parking_area.name if device.parking_area else ""
+                        ),
+                        "area_code": area_code,
+                        "section_id": sec_id,
+                        "data": data,
+                        "from": "live_display",
+                    },
+                )
+            except Exception as e:
+                logger.error(f"Failed to send live_display update: {str(e)}")
+

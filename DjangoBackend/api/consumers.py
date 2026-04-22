@@ -1,6 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+from django.db import close_old_connections
 from .models import ParkingArea, ParkingSection
 from .services import get_live_display_data_for_section
 
@@ -39,6 +40,7 @@ class LiveDisplayConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_initial_data(self):
+        close_old_connections()  # Ensure we have a fresh DB connection in this thread
         area = ParkingArea.objects.filter(area_code=self.area_code).first()
         if not area:
             return {"type": "error", "message": "Invalid Area Code"}
