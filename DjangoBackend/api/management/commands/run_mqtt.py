@@ -65,9 +65,7 @@ class Command(BaseCommand):
                 payload = json.loads(msg.payload.decode())
 
                 # --- 1. HANDLE STATUS (Update Database) ---
-                if msg_type == "status":
-                    self.stdout.write(self.style.NOTICE(f"STATUS received from {device_uid}"))
-                    
+                if msg_type == "status":                    
                     reported_spots = []
                     active_nodes = 0
                     

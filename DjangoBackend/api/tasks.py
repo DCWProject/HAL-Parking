@@ -30,13 +30,13 @@ def Device_offline():
 
 def Spot_offline():
     """
-    Check for spots that have not been updated for more than 1 minute.
+    Check for spots that have not been updated for more than 3 minutes.
     """
     logger.info("Checking for offline spots...")
     now = timezone.now()
-    threshold = now - timedelta(minutes=1)
+    threshold = now - timedelta(minutes=3)
     
-    # Filter spots that are NOT currently OFFLINE but haven't been updated in 1 min
+    # Filter spots that are NOT currently OFFLINE but haven't been updated in 3 min
     offline_spots = Spot.objects.exclude(status="OFFLINE").filter(last_updated__lt=threshold)
 
     if not offline_spots.exists():
@@ -52,7 +52,8 @@ def Spot_offline():
         affected_sections[sec.id] = (area.area_code, area.name)
     
     # Mark as OFFLINE
-    offline_spots.update(status="OFFLINE",status_changed_at=now)
+    updated_spots = offline_spots.update(status="OFFLINE",status_changed_at=now)
+    logger.info(f"Updated {updated_spots} spots to OFFLINE")
 
     # Broadcast updates per section
     for section_id, (a_code, a_name) in affected_sections.items():
@@ -100,11 +101,11 @@ def Spot_offline():
             },
         )
 
-@db_periodic_task(crontab(minute="*"))
+@db_periodic_task(crontab(minute="*3"))
 def check_offline():
     """
     Periodic task to check for unavailability of devices and spots.
-    Runs every minute.
+    Runs 3 every minute.
     """
     logger.info("Executing periodic check for offline devices and spots...")
     Device_offline()

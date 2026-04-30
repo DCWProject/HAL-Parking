@@ -190,6 +190,6 @@ MQTT_BROKER_PASSWORD = config("MQTT_BROKER_PASSWORD", default="nopassword")
 
 #if true return live display data to all spot like 18 spot
 IS_DISPLAY_GRID_VIEW = config("IS_DISPLAY_GRID_VIEW", default=True, cast=bool)
-OCCUPIED_STABLE_SECONDS = config("OCCUPIED_STABLE_SECONDS", default=12, cast=int)
-AVAILABLE_STABLE_SECONDS = config("AVAILABLE_STABLE_SECONDS", default=30, cast=int)
-OFFLINE_STABLE_SECONDS = config("OFFLINE_STABLE_SECONDS", default=18, cast=int)
+OCCUPIED_STABLE_SECONDS = config("OCCUPIED_STABLE_SECONDS", default=0.5, cast=float)
+AVAILABLE_STABLE_SECONDS = config("AVAILABLE_STABLE_SECONDS", default=0.5, cast=float)
+OFFLINE_STABLE_SECONDS = config("OFFLINE_STABLE_SECONDS", default=1.0, cast=float)

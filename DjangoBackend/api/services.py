@@ -7,29 +7,74 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-SPOT_CACHE = {}
+def update_spot_by_code_without_delay(spot_code, new_status):
+    now = timezone.now()
 
+    try:
+        spot = (
+            Spot.objects.select_related(
+                "section",
+                "section__parking_area"
+            )
+            .filter(spot_code=spot_code)
+            .first()
+        )
 
-def load_spot_cache():
+        if not spot:
+            return None
 
-    global SPOT_CACHE
-    SPOT_CACHE = {
-        s.spot_code: s
-        for s in Spot.objects.select_related("section", "section__parking_area")
-    }
+        # Normalize input
+        new_status = new_status.strip().upper()
 
-    logger.info(f"SPOT CACHE loaded ({len(SPOT_CACHE)} spots)")
+        updated_fields = []
 
+        # Always update last seen
+        spot.last_updated = now
+        updated_fields.append("last_updated")
+
+        # If status changed
+        if spot.status != new_status:
+
+            spot.status = new_status
+            updated_fields.append("status")
+
+            spot.status_changed_at = now
+            updated_fields.append("status_changed_at")
+
+            # VERY IMPORTANT RULE
+            # Only update last known valid status
+            if new_status != "OFFLINE":
+                spot.offline_last_status = new_status
+                updated_fields.append("offline_last_status")
+
+        spot.save(update_fields=updated_fields)
+
+        logger.warning(
+            f"{spot_code} | "
+            f"incoming={new_status} | "
+            f"status={spot.status} | "
+            f"offline_last={spot.offline_last_status} | "
+            f"Time={now.strftime('%H:%M:%S')}"
+        )
+        return spot
+
+    except Exception as e:
+        logger.error(f"Error updating spot {spot_code}: {str(e)}")
+        return None
 
 def update_spot_by_code(spot_code, new_status):
     now = timezone.now()
     try:
-        spot = SPOT_CACHE.get(spot_code)
+        spot = (
+            Spot.objects.select_related("section", "section__parking_area")
+            .filter(spot_code=spot_code)
+            .first()
+        )
         if not spot:
             return None
     except:
         return None
-    
+
     try:
         updated_fields = []
         spot.last_updated = now
@@ -94,6 +139,14 @@ def update_spot_by_code(spot_code, new_status):
                         )
 
         spot.save(update_fields=updated_fields)
+        logger.warning(
+            f"{spot_code} | "
+            f"incoming={new_status} | "
+            f"db_status={spot.status} | "
+            f"last_raw={spot.last_raw_status} | "
+            f"duration={(now - spot.raw_status_started_at).total_seconds() if spot.raw_status_started_at else 0} |"
+            f"Time={now.strftime('%H:%M:%S')}"
+        )
         return spot
     except Exception as e:
         logger.error(f"Error updating spot {spot_code}: {str(e)}")
@@ -172,7 +225,6 @@ def process_sensor_data(device_uid, spots_data):
         device.save()
 
     updated_spots = []
-    load_spot_cache()  # Refresh cache to ensure we have the latest data before updates
     for spot_data in spots_data:
         spot_code = get_code(spot_data)
         status = spot_data.get("status").upper()
@@ -246,4 +298,3 @@ def process_sensor_data(device_uid, spots_data):
                 )
             except Exception as e:
                 logger.error(f"Failed to send live_display update: {str(e)}")
-
