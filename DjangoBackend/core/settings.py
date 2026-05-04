@@ -193,3 +193,36 @@ IS_DISPLAY_GRID_VIEW = config("IS_DISPLAY_GRID_VIEW", default=True, cast=bool)
 OCCUPIED_STABLE_SECONDS = config("OCCUPIED_STABLE_SECONDS", default=0.5, cast=float)
 AVAILABLE_STABLE_SECONDS = config("AVAILABLE_STABLE_SECONDS", default=0.5, cast=float)
 OFFLINE_STABLE_SECONDS = config("OFFLINE_STABLE_SECONDS", default=1.0, cast=float)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            # This determines what the log message looks like
+            'format': '[{asctime}] {levelname} [{module}] {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    # The 'root' logger catches everything in your project
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        # Optional: You can explicitly target Django's internal logs here
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

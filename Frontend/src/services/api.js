@@ -5,7 +5,7 @@ import axios from 'axios';
 // but usually we just use one instance and attach token.
 const API_BASE = import.meta.env.VITE_API_BASE;
 const api = axios.create({
-    baseURL: "/api",
+    baseURL: "http://localhost:8000/api",
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',

@@ -152,7 +152,6 @@ def update_spot_by_code(spot_code, new_status):
         logger.error(f"Error updating spot {spot_code}: {str(e)}")
         return None
 
-
 def get_live_display_data_for_section(section_id):
     final_spots = []
 
@@ -180,7 +179,6 @@ def get_live_display_data_for_section(section_id):
             final_spots.extend(offline_spots)
 
     return final_spots
-
 
 def process_sensor_data(device_uid, spots_data):
     """
