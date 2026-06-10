@@ -105,6 +105,7 @@ const styles = `
   font-weight: 900;
   border-radius: 3px;
   letter-spacing: 0.5px;
+  position: relative;
 }
 
 .vgd-spot.vgd-available {
@@ -116,6 +117,13 @@ const styles = `
 .vgd-spot.vgd-full {
   background: #dc2626;
   box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+.vgd-spot.vgd-power-offline {
+  background: #4b5563;
+  color: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+  animation: none;
 }
 
 .vgd-loading {
@@ -253,6 +261,15 @@ export default function LedGridVerticalDisplay() {
     );
   }
 
+  const abSections = sections.filter(s => ['A', 'B'].includes(s.section_code?.trim().toUpperCase()));
+  const cdSections = sections.filter(s => ['C', 'D'].includes(s.section_code?.trim().toUpperCase()));
+
+  const abSpots = abSections.flatMap(s => s.spots || []).filter(Boolean);
+  const isABOffline = abSpots.length > 0 && abSpots.every(spot => spot.current_status === "OFFLINE");
+
+  const cdSpots = cdSections.flatMap(s => s.spots || []).filter(Boolean);
+  const isCDOffline = cdSpots.length > 0 && cdSpots.every(spot => spot.current_status === "OFFLINE");
+
   return (
     <div className="vgd-container">
       <style>{styles}</style>
@@ -285,9 +302,22 @@ export default function LedGridVerticalDisplay() {
       {/* BODY */}
 
       <div className="vgd-body">
-        {sections.map((section) => (
-          <SectionBlock key={section.id} section={section} />
-        ))}
+        {sections.map((section) => {
+          const code = section.section_code?.trim().toUpperCase();
+          let isPowerOffline = false;
+          if (['A', 'B'].includes(code)) {
+            isPowerOffline = isABOffline;
+          } else if (['C', 'D'].includes(code)) {
+            isPowerOffline = isCDOffline;
+          }
+          return (
+            <SectionBlock
+              key={section.id}
+              section={section}
+              isPowerOffline={isPowerOffline}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -295,7 +325,7 @@ export default function LedGridVerticalDisplay() {
 
 /* SECTION BLOCK */
 
-function SectionBlock({ section }) {
+function SectionBlock({ section, isPowerOffline }) {
   return (
     <div className="vgd-section-block">
       {/* SECTION LETTER */}
@@ -309,7 +339,7 @@ function SectionBlock({ section }) {
           const spot = section.spots[i];
 
           return (
-            <SpotBox key={i} spot={spot} sectionId={section.id} index={i} />
+            <SpotBox key={i} spot={spot} sectionId={section.id} index={i} isPowerOffline={isPowerOffline} />
           );
         })}
       </div>
@@ -328,6 +358,7 @@ function SectionBlock({ section }) {
               spot={spot}
               sectionId={section.id}
               index={index}
+              isPowerOffline={isPowerOffline}
             />
           );
         })}
@@ -338,7 +369,7 @@ function SectionBlock({ section }) {
 
 /* SPOT */
 
-function SpotBox({ spot }) {
+function SpotBox({ spot, isPowerOffline }) {
   const isAvailable = spot && spot.status === "AVAILABLE";
 
   let numberText = "--";
@@ -350,15 +381,32 @@ function SpotBox({ spot }) {
     numberText = parts.length > 1 ? parts[1] : spot.spot_code;
   }
 
+  let spotClassName = "vgd-spot vgd-full";
+  if (isPowerOffline) {
+    spotClassName = "vgd-spot vgd-power-offline";
+  } else if (isAvailable) {
+    spotClassName = "vgd-spot vgd-available";
+  }
+
   return (
     <motion.div
-      className={isAvailable ? "vgd-spot vgd-available" : "vgd-spot vgd-full"}
+      className={spotClassName}
       layout
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
     >
       {numberText}
+      {isPowerOffline && (
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          viewBox="0 0 90 90"
+          preserveAspectRatio="none"
+        >
+          <line x1="10" y1="10" x2="80" y2="80" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="2" />
+          <line x1="80" y1="10" x2="10" y2="80" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="2" />
+        </svg>
+      )}
     </motion.div>
   );
 }

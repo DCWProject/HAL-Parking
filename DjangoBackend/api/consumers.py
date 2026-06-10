@@ -5,6 +5,7 @@ from django.db import close_old_connections
 from .models import ParkingArea, ParkingSection
 from .services import get_live_display_data_for_section
 
+
 class LiveDisplayConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.area_code = self.scope["url_route"]["kwargs"].get("area_code")
@@ -63,7 +64,12 @@ class LiveDisplayConsumer(AsyncWebsocketConsumer):
                         {
                             "id": s.id,
                             "spot_code": s.spot_code,
-                            "status": s.status if s.status != "OFFLINE" else s.offline_last_status,
+                            "current_status": s.status,
+                            "status": (
+                                s.status
+                                if s.status != "OFFLINE"
+                                else s.offline_last_status
+                            ),
                             "section_id": s.section_id,
                         }
                         for s in top_spots
@@ -114,4 +120,3 @@ class ParkingDetailConsumer(AsyncWebsocketConsumer):
 
     async def device_log(self, event):
         await self.send(text_data=json.dumps(event))
-

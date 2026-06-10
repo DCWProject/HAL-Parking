@@ -62,6 +62,7 @@ const styles = `
   font-size: 14px;
   font-weight: 900;
   border-radius: 4px;
+  position: relative;
 }
 
 .lgd-spot.lgd-available {
@@ -70,6 +71,11 @@ const styles = `
 
 .lgd-spot.lgd-full {
   background: #dc2626;
+}
+
+.lgd-spot.lgd-power-offline {
+  background: #4b5563;
+  color: rgba(255, 255, 255, 0.5);
 }
 `;
 
@@ -185,13 +191,35 @@ export default function LedGridDisplay() {
     );
   }
 
+  const abSections = sections.filter(s => ['A', 'B'].includes(s.section_code?.trim().toUpperCase()));
+  const cdSections = sections.filter(s => ['C', 'D'].includes(s.section_code?.trim().toUpperCase()));
+
+  const abSpots = abSections.flatMap(s => s.spots || []).filter(Boolean);
+  const isABOffline = abSpots.length > 0 && abSpots.every(spot => spot.current_status === "OFFLINE");
+
+  const cdSpots = cdSections.flatMap(s => s.spots || []).filter(Boolean);
+  const isCDOffline = cdSpots.length > 0 && cdSpots.every(spot => spot.current_status === "OFFLINE");
+
   return (
     <div className="lgd-container">
       <style>{styles}</style>
       <div className="lgd-sections-grid">
-        {sections.map((section) => (
-          <SectionGrid key={section.id} section={section} />
-        ))}
+        {sections.map((section) => {
+          const code = section.section_code?.trim().toUpperCase();
+          let isPowerOffline = false;
+          if (['A', 'B'].includes(code)) {
+            isPowerOffline = isABOffline;
+          } else if (['C', 'D'].includes(code)) {
+            isPowerOffline = isCDOffline;
+          }
+          return (
+            <SectionGrid
+              key={section.id}
+              section={section}
+              isPowerOffline={isPowerOffline}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -201,7 +229,7 @@ export default function LedGridDisplay() {
    SECTION GRID
 ------------------------------ */
 
-function SectionGrid({ section }) {
+function SectionGrid({ section, isPowerOffline }) {
   return (
     <div className="lgd-section-box">
       <div className="lgd-section-title">{section.section_code}</div>
@@ -217,10 +245,18 @@ function SectionGrid({ section }) {
             //numberText = spot.spot_code;
             numberText = parts.length > 1 ? parts[1] : spot.spot_code;
           }
+
+          let spotClassName = "lgd-spot lgd-full";
+          if (isPowerOffline) {
+            spotClassName = "lgd-spot lgd-power-offline";
+          } else if (isAvailable) {
+            spotClassName = "lgd-spot lgd-available";
+          }
+
           return (
             <motion.div
               key={spot ? spot.id : `${section.id}-${i}`}
-              className={isAvailable ? "lgd-spot lgd-available" : "lgd-spot lgd-full"}
+              className={spotClassName}
               layout
               initial={{
                 opacity: 0,
@@ -235,6 +271,16 @@ function SectionGrid({ section }) {
               }}
             >
               {numberText}
+              {isPowerOffline && (
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  viewBox="0 0 90 90"
+                  preserveAspectRatio="none"
+                >
+                  <line x1="10" y1="10" x2="80" y2="80" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="2" />
+                  <line x1="80" y1="10" x2="10" y2="80" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="2" />
+                </svg>
+              )}
             </motion.div>
           );
         })}
