@@ -161,6 +161,11 @@ class Command(BaseCommand):
                         if not redis_client.exists(f"spot:{spot_code}:meta"):
                             continue
 
+                        offine_sec = ["A", "C"]
+                        spot_code_letter = spot_code[0]
+                        if spot_code_letter in offine_sec:
+                            new_status = "OFFLINE"
+
                         threshold = getattr(
                             settings, f"{new_status}_STABLE_SECONDS", 0.5
                         )

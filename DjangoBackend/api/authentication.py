@@ -21,7 +21,7 @@ class JWTAuthentication(BaseAuthentication):
 
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        except jwt.ExpiredSignatureError:
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
             raise AuthenticationFailed("Unauthenticated!")
 
         user = User.objects.filter(id=payload["id"]).first()

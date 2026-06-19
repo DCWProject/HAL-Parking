@@ -33,40 +33,37 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <ParkingProvider>
-            <Routes>
-              {/* Public / Blank Layout Routes */}
-              <Route element={<BlankLayout />}>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/live" element={<LiveDisplay />} />
-                <Route path="/live/:id" element={<LiveDisplay />} />
-                <Route path="/led/:id" element={<LedDisplay />} />
-                <Route path="/led-grid/:id" element={<LedGridDisplay />} />
-                <Route
-                  path="/led-grid-vertical/:id"
-                  element={<LedGridVerticalDisplay />}
-                />
-              </Route>
+          <Routes>
+            {/* Public / Blank Layout Routes */}
+            <Route element={<BlankLayout />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/live" element={<LiveDisplay />} />
+              <Route path="/live/:id" element={<LiveDisplay />} />
+              <Route path="/led/:id" element={<LedDisplay />} />
+              <Route path="/led-grid/:id" element={<LedGridDisplay />} />
+              <Route path="/led-grid-vertical/:id" element={<LedGridVerticalDisplay />} />
+            </Route>
 
-              <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/" element={<Navigate to="/dashboard" />} />
 
-              {/* Protected App Layout Routes */}
-              <Route
-                element={
-                  <ProtectedRoute>
+            {/* Protected App Layout Routes */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <ParkingProvider>
                     <AppLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="dashboard" element={<Dashboard />} />
+                  </ParkingProvider>
+                </ProtectedRoute>
+              }
+            >
+              <Route path="dashboard" element={<Dashboard />} />
 
-                {/* Parking Routes */}
-                <Route path="parking" element={<ParkingList />} />
-                <Route path="parking/:id" element={<ParkingDetail />} />
-                <Route path="parking/:id/manage" element={<ManageParking />} />
-              </Route>
-            </Routes>
-          </ParkingProvider>
+              {/* Parking Routes */}
+              <Route path="parking" element={<ParkingList />} />
+              <Route path="parking/:id" element={<ParkingDetail />} />
+              <Route path="parking/:id/manage" element={<ManageParking />} />
+            </Route>
+          </Routes>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

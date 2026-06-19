@@ -32,7 +32,15 @@ const styles = `
 }
 
 .vgd-header-center {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vgd-header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .vgd-header-title {
@@ -44,6 +52,24 @@ const styles = `
 .vgd-header-status {
   font-size: 10px;
   margin-top: 1px;
+}
+
+.vgd-datetime-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.vgd-date-display {
+  color: #9ca3af;
+}
+
+.vgd-time-display {
+  color: #38bdf8;
 }
 
 .vgd-live {
@@ -151,6 +177,32 @@ export default function LedGridVerticalDisplay() {
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [areaName, setAreaName] = useState("Smart Parking");
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date) => {
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const strHours = String(hours).padStart(2, '0');
+    return `${strHours}:${minutes}:${seconds} ${ampm}`;
+  };
+
+  const formatDate = (date) => {
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const day = date.getDate();
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    return `${weekday}, ${day} ${month}`;
+  };
 
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
@@ -193,12 +245,16 @@ export default function LedGridVerticalDisplay() {
 
     ws.onclose = () => {
       setIsConnected(false);
-      wsRef.current = null;
 
-      if (!reconnectTimeoutRef.current) {
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connectWebSocket(targetAreaId);
-        }, 3000);
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+
+        if (!reconnectTimeoutRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = null;
+            connectWebSocket(targetAreaId);
+          }, 3000);
+        }
       }
     };
 
@@ -242,12 +298,16 @@ export default function LedGridVerticalDisplay() {
       setLoading(true);
       connectWebSocket(id);
     }
-
     return () => {
-      if (wsRef.current) wsRef.current.close();
+      if (wsRef.current) {
+        const socketToClose = wsRef.current;
+        wsRef.current = null;
+        socketToClose.close();
+      }
 
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
     };
   }, [id]);
@@ -279,20 +339,27 @@ export default function LedGridVerticalDisplay() {
         <img src="/images/logo_full_dark.png" alt="logo" className="vgd-logo" />
 
         <div className="vgd-header-center">
-          <div className="vgd-header-title">{areaName}</div>
+          <div className="vgd-header-info">
+            <div className="vgd-header-title">{areaName}</div>
 
-          <div className="vgd-header-status">
-            {isConnected ? (
-              <span className="vgd-live">
-                <Wifi size={10} />
-                LIVE
-              </span>
-            ) : (
-              <span className="vgd-offline">
-                <WifiOff size={10} />
-                OFFLINE
-              </span>
-            )}
+            <div className="vgd-header-status">
+              {isConnected ? (
+                <span className="vgd-live">
+                  <Wifi size={10} />
+                  LIVE
+                </span>
+              ) : (
+                <span className="vgd-offline">
+                  <WifiOff size={10} />
+                  OFFLINE
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="vgd-datetime-container">
+            <div className="vgd-date-display">{formatDate(currentTime)}</div>
+            <div className="vgd-time-display">{formatTime(currentTime)}</div>
           </div>
         </div>
 
@@ -305,7 +372,9 @@ export default function LedGridVerticalDisplay() {
         {sections.map((section) => {
           const code = section.section_code?.trim().toUpperCase();
           let isPowerOffline = false;
-          if (['A', 'B'].includes(code)) {
+          if (!isConnected) {
+            isPowerOffline = true;
+          } else if (['A', 'B'].includes(code)) {
             isPowerOffline = isABOffline;
           } else if (['C', 'D'].includes(code)) {
             isPowerOffline = isCDOffline;

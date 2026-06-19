@@ -106,39 +106,52 @@ class SpotViewSet(BaseViewSet):
     def bulk_create(self, request):
         section = request.data.get("section")
         try:
-             parking_section = ParkingSection.objects.get(id=section)
+            parking_section = ParkingSection.objects.get(id=section)
         except ParkingSection.DoesNotExist:
-             return Response({"error": "Section not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        spot_data_list = request.data.get("spots", []) # New format: list of {spot_code, min_dist, max_dist}
+            return Response(
+                {"error": "Section not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        spot_data_list = request.data.get(
+            "spots", []
+        )  # New format: list of {spot_code, min_dist, max_dist}
         # Fallback for old format or simple format
         if not spot_data_list and "spot_codes" in request.data:
             codes = request.data.get("spot_codes")
-            spot_data_list = [{"spot_code": c, "min_dist": 50, "max_dist": 100} for c in codes]
+            spot_data_list = [
+                {"spot_code": c, "min_dist": 50, "max_dist": 100} for c in codes
+            ]
 
         spots_to_create = []
         errors = []
 
         for item in spot_data_list:
-            if isinstance(item, str): # Handle mixed case just in case
+            if isinstance(item, str):  # Handle mixed case just in case
                 item = {"spot_code": item, "min_dist": 50, "max_dist": 100}
-            
+
             min_dist = int(item.get("min_dist", 50))
             max_dist = int(item.get("max_dist", 100))
-            
+
             if min_dist >= max_dist:
-                errors.append(f"Spot {item.get('spot_code')}: Min distance must be less than Max distance.")
+                errors.append(
+                    f"Spot {item.get('spot_code')}: Min distance must be less than Max distance."
+                )
                 continue
 
-            spots_to_create.append(Spot(
-                section=parking_section, 
-                spot_code=item.get("spot_code"),
-                min_dist=min_dist,
-                max_dist=max_dist
-            ))
-        
+            spots_to_create.append(
+                Spot(
+                    section=parking_section,
+                    spot_code=item.get("spot_code"),
+                    min_dist=min_dist,
+                    max_dist=max_dist,
+                )
+            )
+
         if errors:
-            return Response({"error": "Validation failed", "details": errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Validation failed", "details": errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         created_spots = Spot.objects.bulk_create(spots_to_create)
         serializer = SpotSerializer(created_spots, many=True)
@@ -157,31 +170,36 @@ class DeviceViewSet(BaseViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         if "debug_mode" in request.data:
-            if request.data["debug_mode"] is True or request.data["debug_mode"] == "true":
-                 request.data["debug_mode_updated_at"] = timezone.now()
+            if (
+                request.data["debug_mode"] is True
+                or request.data["debug_mode"] == "true"
+            ):
+                request.data["debug_mode_updated_at"] = timezone.now()
 
         response = super().partial_update(request, *args, **kwargs)
-        
+
         if "debug_mode" in request.data:
             device = self.get_object()
             self._send_debug_update(device)
-            
+
         return response
 
     def _send_debug_update(self, device):
         try:
             client = mqtt.Client(client_id=f"django_debug_toggler_{device.id}")
             client.connect("localhost", 1883, 60)
-            
-            area_code = device.parking_area.area_code if device.parking_area else "default"
+
+            area_code = (
+                device.parking_area.area_code if device.parking_area else "default"
+            )
             topic = f"parking/{area_code}/{device.device_uid}/command"
-            
+
             payload = {
-                "action": "update_config", 
+                "action": "update_config",
                 "debug": device.debug_mode,
-                "spots": []
+                "spots": [],
             }
-            
+
             client.publish(topic, json.dumps(payload))
             client.disconnect()
         except Exception as e:
@@ -190,21 +208,25 @@ class DeviceViewSet(BaseViewSet):
     @action(detail=True, methods=["post"])
     def restart(self, request, pk=None):
         device = self.get_object()
-        
+
         try:
             client = mqtt.Client(client_id=f"django_restarter_{device.id}")
             client.connect("localhost", 1883, 60)
-            
-            area_code = device.parking_area.area_code if device.parking_area else "default"
+
+            area_code = (
+                device.parking_area.area_code if device.parking_area else "default"
+            )
             topic = f"parking/{area_code}/{device.device_uid}/command"
             payload = {"action": "reboot"}
-            
+
             client.publish(topic, json.dumps(payload))
             client.disconnect()
-            
+
             return Response({"message": f"Restart command sent to {device.device_uid}"})
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=["post"])
     def reset_spots(self, request, pk=None):
@@ -217,41 +239,41 @@ class DeviceViewSet(BaseViewSet):
         if device.is_online:
             return Response(
                 {"error": "Device must be OFFLINE to reset spots directly."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         spots = Spot.objects.filter(section__in=device.sections.all())
         updated_count = spots.update(status="OFFLINE")
-        
+
         channel_layer = get_channel_layer()
         area_code = device.parking_area.area_code if device.parking_area else None
-        
+
         if area_code and updated_count > 0:
             updated_spots = Spot.objects.filter(section__in=device.sections.all())
-            
+
             spot_data_list = []
             for spot in updated_spots:
-                spot_data_list.append({
-                    "id": spot.id,
-                    "spot_code": spot.spot_code,
-                    "status": 0,
-                    "section_id": spot.section_id,
-                })
-            
-            event = {
-                "type": "spot_update",
-                "data": spot_data_list
-            }
-            
+                spot_data_list.append(
+                    {
+                        "id": spot.id,
+                        "spot_code": spot.spot_code,
+                        "status": 0,
+                        "section_id": spot.section_id,
+                    }
+                )
+
+            event = {"type": "spot_update", "data": spot_data_list}
+
             async_to_sync(channel_layer.group_send)(
                 f"parking_detail_{area_code}", event
             )
-            
 
-        return Response({
-            "message": f"Reset {updated_count} spots to AVAILABLE for device {device.device_uid}",
-            "updated_count": updated_count
-        })
+        return Response(
+            {
+                "message": f"Reset {updated_count} spots to AVAILABLE for device {device.device_uid}",
+                "updated_count": updated_count,
+            }
+        )
 
 
 class SensorUpdateView(APIView):
@@ -275,6 +297,7 @@ class SensorUpdateView(APIView):
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
