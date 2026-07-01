@@ -1,4 +1,5 @@
 import json
+from django.utils import timezone
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.db import close_old_connections
@@ -33,6 +34,17 @@ class LiveDisplayConsumer(AsyncWebsocketConsumer):
 
     async def live_slots_update(self, event):
         await self.send(text_data=json.dumps(event))
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+        except (json.JSONDecodeError, TypeError):
+            return
+        if data.get("type") == "ping":
+            await self.send(text_data=json.dumps({
+                "type": "pong",
+                "server_time_ms": int(timezone.now().timestamp() * 1000),
+            }))
 
     async def send_initial_state(self):
         data = await self.get_initial_data()
@@ -83,6 +95,7 @@ class LiveDisplayConsumer(AsyncWebsocketConsumer):
             "area_code": area.area_code,
             "total_sections": len(sections),
             "sections": sections_data,
+            "server_time_ms": int(timezone.now().timestamp() * 1000),
         }
 
 
