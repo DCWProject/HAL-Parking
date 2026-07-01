@@ -5,36 +5,42 @@ import { Wifi, WifiOff } from "lucide-react";
 
 const styles = `
 .vgd-container {
-  width: 480px;
-  height: 320px;
-  background: #090235;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, #0d0642 0%, #05021a 100%);
   color: white;
   font-family: sans-serif;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
+  padding: 1.5vh;
 }
 
 .vgd-header {
-  height: 44px;
+  height: 14vh;
+  min-height: 90px;
   background: #090224;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-left: 6px;
-  padding-right: 6px;
-  border-bottom: 1px solid #e4e4e4;
+  padding-left: 3vh;
+  padding-right: 3vh;
+  border-bottom: 3px solid #38bdf8;
+  border-radius: 12px;
+  margin-bottom: 2vh;
+  box-sizing: border-box;
 }
 
 .vgd-logo {
-  height: 28px;
+  height: 9vh;
   width: auto;
 }
 
 .vgd-header-center {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 3vh;
 }
 
 .vgd-header-info {
@@ -44,14 +50,14 @@ const styles = `
 }
 
 .vgd-header-title {
-  font-size: 16px;
+  font-size: 4.5vh;
   font-weight: 900;
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .vgd-header-status {
-  font-size: 10px;
-  margin-top: 1px;
+  font-size: 2.2vh;
+  margin-top: 4px;
 }
 
 .vgd-datetime-container {
@@ -59,7 +65,7 @@ const styles = `
   flex-direction: column;
   align-items: center;
   font-family: monospace;
-  font-size: 12px;
+  font-size: 2.6vh;
   font-weight: bold;
   line-height: 1.2;
 }
@@ -77,7 +83,7 @@ const styles = `
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 6px;
 }
 
 .vgd-offline {
@@ -85,64 +91,70 @@ const styles = `
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 6px;
 }
 
 .vgd-body {
   flex: 1;
   display: grid;
   grid-template-rows: repeat(4, 1fr);
-  gap: 5px;
-  padding: 5px;
+  gap: 1.5vh;
+  box-sizing: border-box;
 }
 
 .vgd-section-block {
   display: grid;
-  grid-template-columns: 36px 1fr;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 3px;
+  grid-template-columns: 10vh 1fr;
+  grid-template-rows: 1fr;
+  gap: 2vh;
   background: #090224;
-  border-radius: 6px;
-  padding: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5vh 2vh;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-sizing: border-box;
+  align-items: center;
 }
 
 .vgd-section-name {
-  grid-row: span 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 7vh;
   font-weight: 900;
   color: white;
+  border-right: 3px solid rgba(255, 255, 255, 0.15);
+  height: 100%;
+  padding-right: 2vh;
 }
 
 .vgd-spot-row {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 3px;
+  grid-template-columns: repeat(18, 1fr);
+  gap: 1vh;
 }
 
 .vgd-spot {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 3.5vh;
   font-weight: 900;
-  border-radius: 3px;
+  border-radius: 6px;
   letter-spacing: 0.5px;
   position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
 }
 
 .vgd-spot.vgd-available {
   background: #22c55e;
-  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
   animation: vgd-blinkAvailable 2s infinite;
 }
 
 .vgd-spot.vgd-full {
   background: #dc2626;
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
 }
 
 .vgd-spot.vgd-power-offline {
@@ -153,14 +165,15 @@ const styles = `
 }
 
 .vgd-loading {
-  width: 480px;
-  height: 320px;
+  width: 100vw;
+  height: 100vh;
   background: black;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 4vh;
+  font-weight: bold;
 }
 
 // @keyframes vgd-blinkAvailable {
@@ -170,7 +183,7 @@ const styles = `
 // }
 `;
 
-export default function LedGridVerticalDisplay() {
+export default function LedGridVerticalFullDisplay() {
   const { id } = useParams();
 
   const [sections, setSections] = useState([]);
@@ -188,19 +201,19 @@ export default function LedGridVerticalDisplay() {
 
   const formatTime = (date) => {
     let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12;
     hours = hours ? hours : 12;
-    const strHours = String(hours).padStart(2, '0');
+    const strHours = String(hours).padStart(2, "0");
     return `${strHours}:${minutes}:${seconds} ${ampm}`;
   };
 
   const formatDate = (date) => {
-    const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
     const day = date.getDate();
-    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const month = date.toLocaleDateString("en-US", { month: "short" });
     return `${weekday}, ${day} ${month}`;
   };
 
@@ -347,20 +360,26 @@ export default function LedGridVerticalDisplay() {
     );
   }
 
-  const abSections = sections.filter(s => ['A', 'B'].includes(s.section_code?.trim().toUpperCase()));
-  const cdSections = sections.filter(s => ['C', 'D'].includes(s.section_code?.trim().toUpperCase()));
+  const abSections = sections.filter((s) =>
+    ["A", "B"].includes(s.section_code?.trim().toUpperCase())
+  );
+  const cdSections = sections.filter((s) =>
+    ["C", "D"].includes(s.section_code?.trim().toUpperCase())
+  );
 
-  const abSpots = abSections.flatMap(s => s.spots || []).filter(Boolean);
-  const isABOffline = abSpots.length > 0 && abSpots.every(spot => spot.current_status === "OFFLINE");
+  const abSpots = abSections.flatMap((s) => s.spots || []).filter(Boolean);
+  const isABOffline =
+    abSpots.length > 0 && abSpots.every((spot) => spot.current_status === "OFFLINE");
 
-  const cdSpots = cdSections.flatMap(s => s.spots || []).filter(Boolean);
-  const isCDOffline = cdSpots.length > 0 && cdSpots.every(spot => spot.current_status === "OFFLINE");
+  const cdSpots = cdSections.flatMap((s) => s.spots || []).filter(Boolean);
+  const isCDOffline =
+    cdSpots.length > 0 && cdSpots.every((spot) => spot.current_status === "OFFLINE");
 
   return (
     <div className="vgd-container">
       <style>{styles}</style>
-      {/* HEADER */}
 
+      {/* HEADER */}
       <header className="vgd-header">
         <img src="/images/logo_full_dark.png" alt="logo" className="vgd-logo" />
 
@@ -371,12 +390,12 @@ export default function LedGridVerticalDisplay() {
             <div className="vgd-header-status">
               {isConnected ? (
                 <span className="vgd-live">
-                  <Wifi size={10} />
+                  <Wifi size={22} />
                   LIVE
                 </span>
               ) : (
                 <span className="vgd-offline">
-                  <WifiOff size={10} />
+                  <WifiOff size={22} />
                   OFFLINE
                 </span>
               )}
@@ -393,16 +412,15 @@ export default function LedGridVerticalDisplay() {
       </header>
 
       {/* BODY */}
-
       <div className="vgd-body">
         {sections.map((section) => {
           const code = section.section_code?.trim().toUpperCase();
           let isPowerOffline = false;
           if (!isConnected) {
             isPowerOffline = true;
-          } else if (['A', 'B'].includes(code)) {
+          } else if (["A", "B"].includes(code)) {
             isPowerOffline = isABOffline;
-          } else if (['C', 'D'].includes(code)) {
+          } else if (["C", "D"].includes(code)) {
             isPowerOffline = isCDOffline;
           }
           return (
@@ -419,40 +437,20 @@ export default function LedGridVerticalDisplay() {
 }
 
 /* SECTION BLOCK */
-
 function SectionBlock({ section, isPowerOffline }) {
   return (
     <div className="vgd-section-block">
-      {/* SECTION LETTER */}
-
       <div className="vgd-section-name">{section.section_code}</div>
 
-      {/* ROW 1 */}
-
       <div className="vgd-spot-row">
-        {Array.from({ length: 9 }).map((_, i) => {
+        {Array.from({ length: 18 }).map((_, i) => {
           const spot = section.spots[i];
-
-          return (
-            <SpotBox key={i} spot={spot} sectionId={section.id} index={i} isPowerOffline={isPowerOffline} />
-          );
-        })}
-      </div>
-
-      {/* ROW 2 */}
-
-      <div className="vgd-spot-row">
-        {Array.from({ length: 9 }).map((_, i) => {
-          const index = i + 9;
-
-          const spot = section.spots[index];
-
           return (
             <SpotBox
-              key={index}
+              key={i}
               spot={spot}
               sectionId={section.id}
-              index={index}
+              index={i}
               isPowerOffline={isPowerOffline}
             />
           );
@@ -463,7 +461,6 @@ function SectionBlock({ section, isPowerOffline }) {
 }
 
 /* SPOT */
-
 function SpotBox({ spot, isPowerOffline }) {
   const isAvailable = spot && spot.status === "AVAILABLE";
 
@@ -471,8 +468,6 @@ function SpotBox({ spot, isPowerOffline }) {
 
   if (spot && spot.spot_code) {
     const parts = spot.spot_code.split("-");
-
-    // numberText = spot.spot_code;
     numberText = parts.length > 1 ? parts[1] : spot.spot_code;
   }
 
@@ -498,8 +493,22 @@ function SpotBox({ spot, isPowerOffline }) {
           viewBox="0 0 90 90"
           preserveAspectRatio="none"
         >
-          <line x1="10" y1="10" x2="80" y2="80" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="2" />
-          <line x1="80" y1="10" x2="10" y2="80" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="2" />
+          <line
+            x1="10"
+            y1="10"
+            x2="80"
+            y2="80"
+            stroke="rgba(255, 255, 255, 0.6)"
+            strokeWidth="2"
+          />
+          <line
+            x1="80"
+            y1="10"
+            x2="10"
+            y2="80"
+            stroke="rgba(255, 255, 255, 0.6)"
+            strokeWidth="2"
+          />
         </svg>
       )}
     </motion.div>

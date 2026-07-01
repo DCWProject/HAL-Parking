@@ -10,6 +10,9 @@ import LiveDisplay from "@/pages/LiveDisplay";
 import LedDisplay from "@/pages/LedDisplay";
 import LedGridDisplay from "./pages/LedGridDisplay";
 import LedGridVerticalDisplay from "./pages/LedGridVerticalDisplay";
+import LedGridVerticalFullDisplay from "./pages/LedGridVerticalFullDisplay";
+import LedGridVerticalOneRowDisplay from "./pages/LedGridVerticalOneRowDisplay";
+import LedGridVerticalOneRowUpDisplay from "./pages/LedGridVerticalOneRowUpDisplay";
 import ParkingList from "@/pages/Parking/ParkingList";
 import ParkingDetail from "@/pages/Parking/ParkingDetail";
 import ManageParking from "@/pages/Parking/ManageParking/index";
@@ -42,6 +45,9 @@ export default function App() {
               <Route path="/led/:id" element={<LedDisplay />} />
               <Route path="/led-grid/:id" element={<LedGridDisplay />} />
               <Route path="/led-grid-vertical/:id" element={<LedGridVerticalDisplay />} />
+              <Route path="/led-grid-vertical-full/:id" element={<LedGridVerticalFullDisplay />} />
+              <Route path="/led-grid-vertical-onerow/:id" element={<LedGridVerticalOneRowDisplay />} />
+              <Route path="/led-grid-vertical-onerowup/:id" element={<LedGridVerticalOneRowUpDisplay />} />
             </Route>
 
             <Route path="/" element={<Navigate to="/dashboard" />} />
